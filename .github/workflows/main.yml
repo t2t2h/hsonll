@@ -1,0 +1,49 @@
+name: Build dylib
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Theos
+        run: |
+          brew install ldid make dpkg
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
+          rm -rf $HOME/theos/sdks
+          git clone --depth=1 https://github.com/theos/sdks.git $HOME/theos/sdks
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+          echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH
+
+      - name: Prepare Makefile (flat, no prefs)
+        run: |
+          sed -i '' '/SUBPROJECTS/d' Makefile || true
+          sed -i '' '/aggregate.mk/d' Makefile || true
+          rm -rf agorarecorderprefs
+          echo "----- Makefile -----"
+          cat Makefile
+
+      - name: Build
+        run: |
+          make clean || true
+          make FINALPACKAGE=1 ARCHS=arm64 TARGET=iphone:clang:latest:14.0
+
+      - name: Collect and sign dylib
+        run: |
+          mkdir -p out
+          find .theos/obj -name "*.dylib" -exec cp {} out/ \;
+          for f in out/*.dylib; do
+            ldid -S "$f" || true
+            echo "== $f =="
+            otool -L "$f"
+          done
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dylib
+          path: out/*.dylib
