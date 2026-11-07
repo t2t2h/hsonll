@@ -1,0 +1,11 @@
+Package: com.yourname.agorarecorder
+Name: Agora Call Recorder
+Version: 1.1.0
+Architecture: iphoneos-arm64
+Description: Local call recording for an Agora-based app you own, with optional post-call upload to Twilio.
+Maintainer: Your Name
+Author: Your Name
+Section: Tweaks
+Depends: mobilesubstrate, preferenceloader (>= 2.0.0)
+# IMPORTANT: replace with the bundle ID of YOUR app only.
+# This Filter is what restricts the tweak to a single app you control.
